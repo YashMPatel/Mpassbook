@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Mpassbook</string>
+    <string name="title_activity_main">Mpassbook</string>
+    <string name="package_name">com.ankit.mpassbook</string>
+    <string name="custom_url_scheme">com.ankit.mpassbook</string>
+</resources>
