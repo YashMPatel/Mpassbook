@@ -16,6 +16,7 @@
       --primary-dark: #1d4ed8;
       --income: #16a34a;
       --expense: #dc2626;
+      --ccpay: #0284c7;
       --receive: #7c3aed;
       --pay: #ea580c;
       --shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
@@ -33,6 +34,7 @@
       --primary-dark: #2563eb;
       --income: #22c55e;
       --expense: #f87171;
+      --ccpay: #38bdf8;
       --receive: #a78bfa;
       --pay: #fb923c;
       --shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
@@ -40,7 +42,7 @@
 
     * { box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Gujarati", "Noto Sans Devanagari", sans-serif;
       background-color: var(--bg);
       color: var(--text);
       margin: 0;
@@ -56,13 +58,15 @@
       max-width: 560px;
     }
 
-    /* Header */
+    /* Header — Mobile-First Clean Layout */
     .header {
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
+      gap: 10px;
       background: var(--surface);
-      padding: 14px 16px;
+      padding: 12px 14px;
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       border: 1px solid var(--border);
@@ -84,6 +88,7 @@
       justify-content: center;
       font-weight: 800;
       font-size: 18px;
+      flex-shrink: 0;
     }
     .brand h1 {
       margin: 0;
@@ -100,8 +105,20 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      margin-left: auto;
     }
-    .currency-select {
+    @media (max-width: 440px) {
+      .header-actions {
+        width: 100%;
+        justify-content: space-between;
+        padding-top: 8px;
+        border-top: 1px solid var(--border);
+      }
+      .header-actions select {
+        flex: 1;
+      }
+    }
+    .currency-select, .lang-select {
       padding: 7px 10px;
       border-radius: 8px;
       border: 1.5px solid var(--primary);
@@ -112,12 +129,15 @@
       width: auto;
       cursor: pointer;
     }
+    .lang-select {
+      border-color: var(--receive);
+    }
     .icon-btn {
       background: var(--surface-alt);
       color: var(--text);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 7px 10px;
+      padding: 7px 11px;
       font-size: 15px;
       cursor: pointer;
       flex: none;
@@ -171,6 +191,7 @@
       font-size: 12px;
       font-weight: 700;
       margin-bottom: 8px;
+      gap: 8px;
     }
     .budget-edit-btn {
       background: transparent;
@@ -243,12 +264,14 @@
 
     .btn-row {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       margin-top: 6px;
+      flex-wrap: wrap;
     }
     .btn {
       flex: 1;
-      padding: 11px 12px;
+      min-width: 100px;
+      padding: 11px 10px;
       border: none;
       border-radius: 9px;
       color: #ffffff;
@@ -260,6 +283,7 @@
     .btn:active { transform: scale(0.98); }
     .btn-income { background: var(--income); color: #ffffff; }
     .btn-expense { background: var(--expense); color: #ffffff; }
+    .btn-ccpay { background: var(--ccpay); color: #ffffff; }
     .btn-receive { background: var(--receive); color: #ffffff; }
     .btn-pay { background: var(--pay); color: #ffffff; }
     .btn-primary { background: var(--primary); color: #ffffff; }
@@ -341,6 +365,11 @@
       background: var(--surface);
       border: 1px solid var(--border);
       color: var(--text-muted);
+    }
+    .badge-cc {
+      background: rgba(2, 132, 199, 0.14);
+      color: var(--ccpay);
+      border-color: var(--ccpay);
     }
     .tx-right {
       display: flex;
@@ -450,10 +479,20 @@
     .print-header { display: none; }
 
     @media print {
-      body { background: #fff !important; color: #000 !important; padding: 0; }
+      body {
+        background: #fff !important;
+        color: #000 !important;
+        padding: 0;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
       .header-actions, .bottom-nav, .no-print { display: none !important; }
       .tab-panel { display: block !important; }
-      .card, .kpi-card, .tx-item { box-shadow: none !important; border: 1px solid #ccc !important; }
+      .card, .kpi-card, .tx-item {
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+        break-inside: avoid;
+      }
       .print-header {
         display: block !important;
         text-align: center;
@@ -474,11 +513,16 @@
     <div class="brand">
       <div class="brand-icon">M</div>
       <div>
-        <h1>Mpassbook</h1>
+        <h1 data-i18n="appTitle">Mpassbook</h1>
         <p id="walletSubtitle">Active Wallet: USD ($)</p>
       </div>
     </div>
     <div class="header-actions">
+      <select id="langSelect" class="lang-select" onchange="changeLanguage()" aria-label="Language">
+        <option value="en">EN</option>
+        <option value="hi">हिन्दी</option>
+        <option value="gu">ગુજરાતી</option>
+      </select>
       <select id="currencySelect" class="currency-select" onchange="changeCurrency()" aria-label="Currency Wallet">
         <option value="$">USD ($)</option>
         <option value="₹">INR (₹)</option>
@@ -488,31 +532,31 @@
         <option value="AUD ">AUD ($)</option>
         <option value="AED ">AED</option>
       </select>
-      <button type="button" class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+      <button type="button" class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle Theme">🌙</button>
     </div>
   </header>
 
   <!-- KPI Summary Cards -->
   <section class="kpi-grid">
     <div class="kpi-card">
-      <div class="kpi-label">Net Balance (<span class="cur-code">USD</span>)</div>
+      <div class="kpi-label"><span data-i18n="bankCashBalance">Bank / Cash Balance</span> (<span class="cur-code">USD</span>)</div>
       <div class="kpi-value" id="kpiNetBalance">$0.00</div>
-      <div class="kpi-sub">Separate wallet per currency</div>
+      <div class="kpi-sub" id="kpiCcDueSub">CC Unpaid Due: $0.00</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Friends Net (<span class="cur-code">USD</span>)</div>
+      <div class="kpi-label"><span data-i18n="friendsNet">Friends Net</span> (<span class="cur-code">USD</span>)</div>
       <div class="kpi-value" id="kpiFriendsNet">$0.00</div>
       <div class="kpi-sub" id="kpiFriendsSub">Receive $0.00 · Pay $0.00</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Period Income</div>
+      <div class="kpi-label" data-i18n="periodIncome">Period Income</div>
       <div class="kpi-value" style="color: var(--income);" id="kpiIncome">$0.00</div>
-      <div class="kpi-sub">Selected date range</div>
+      <div class="kpi-sub" data-i18n="selectedDateRange">Selected date range</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Period Expense</div>
+      <div class="kpi-label" data-i18n="periodExpense">Period Expense</div>
       <div class="kpi-value" style="color: var(--expense);" id="kpiExpense">$0.00</div>
-      <div class="kpi-sub">Selected date range</div>
+      <div class="kpi-sub" data-i18n="excludesCcTransfers">Excludes CC bill transfers</div>
     </div>
   </section>
 
@@ -520,7 +564,7 @@
   <section class="card no-print">
     <div class="budget-header">
       <span id="budgetLabel">This Month Spending: $0.00 / $2,000.00 (0%)</span>
-      <button type="button" class="budget-edit-btn" onclick="editMonthlyBudget()">Edit Limit</button>
+      <button type="button" class="budget-edit-btn" data-i18n="editLimit" onclick="editMonthlyBudget()">Edit Limit</button>
     </div>
     <div class="progress-track">
       <div class="progress-fill" id="budgetFill" style="width: 0%;"></div>
@@ -532,17 +576,17 @@
     <div class="card no-print">
       <div class="section-header">
         <h2 class="section-title" id="txFormTitle">Add Transaction</h2>
-        <button type="button" class="budget-edit-btn" id="cancelTxEditBtn" style="display:none;" onclick="resetTxForm()">Cancel Edit</button>
+        <button type="button" class="budget-edit-btn" id="cancelTxEditBtn" data-i18n="cancelEdit" style="display:none;" onclick="resetTxForm()">Cancel Edit</button>
       </div>
       <input type="hidden" id="editIndex" value="" />
 
       <div class="form-grid">
         <div class="form-group">
-          <label for="amount">Amount</label>
+          <label for="amount" data-i18n="amount">Amount</label>
           <input type="number" id="amount" step="0.01" min="0" placeholder="0.00" />
         </div>
         <div class="form-group">
-          <label for="category">Category</label>
+          <label for="category" data-i18n="category">Category</label>
           <select id="category">
             <option value="Food & Dining">Food & Dining</option>
             <option value="Groceries">Groceries</option>
@@ -557,7 +601,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="paymentMode">Payment Mode</label>
+          <label for="paymentMode" data-i18n="paymentMode">Payment Mode</label>
           <select id="paymentMode">
             <option value="UPI / Bank">UPI / Bank</option>
             <option value="Cash">Cash</option>
@@ -566,46 +610,47 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="transactionDate">Date</label>
+          <label for="transactionDate" data-i18n="date">Date</label>
           <input type="date" id="transactionDate" />
         </div>
         <div class="form-group full">
-          <label for="desc">Description / Note</label>
-          <input type="text" id="desc" placeholder="e.g., Lunch, Fuel, Monthly Salary..." />
+          <label for="desc" data-i18n="descNote">Description / Note</label>
+          <input type="text" id="desc" data-i18n-placeholder="descPlaceholder" placeholder="e.g., Lunch, Fuel, SBICARD Payment..." />
         </div>
       </div>
 
       <div class="btn-row">
-        <button type="button" class="btn btn-income" onclick="addOrUpdateTransaction('income')">+ Add Income</button>
-        <button type="button" class="btn btn-expense" onclick="addOrUpdateTransaction('expense')">- Add Expense</button>
+        <button type="button" class="btn btn-income" data-i18n="btnIncome" onclick="addOrUpdateTransaction('income')">+ Income</button>
+        <button type="button" class="btn btn-expense" data-i18n="btnExpense" onclick="addOrUpdateTransaction('expense')">- Expense</button>
+        <button type="button" class="btn btn-ccpay" data-i18n="btnCcPay" onclick="addOrUpdateTransaction('cc_payment')">💳 Pay CC Bill</button>
       </div>
     </div>
 
     <!-- Filters & Search -->
     <div class="card no-print">
       <div class="section-header">
-        <h2 class="section-title">Filter & Search</h2>
+        <h2 class="section-title" data-i18n="filterSearch">Filter & Search</h2>
       </div>
 
       <div class="pill-row" id="datePresetPills">
-        <button type="button" class="pill" onclick="applyDatePreset('today', this)">Today</button>
-        <button type="button" class="pill" onclick="applyDatePreset('week', this)">This Week</button>
-        <button type="button" class="pill active" onclick="applyDatePreset('month', this)">This Month</button>
-        <button type="button" class="pill" onclick="applyDatePreset('lastMonth', this)">Last Month</button>
-        <button type="button" class="pill" onclick="applyDatePreset('all', this)">All Time</button>
+        <button type="button" class="pill" data-i18n="today" onclick="applyDatePreset('today', this)">Today</button>
+        <button type="button" class="pill" data-i18n="thisWeek" onclick="applyDatePreset('week', this)">This Week</button>
+        <button type="button" class="pill active" data-i18n="thisMonth" onclick="applyDatePreset('month', this)">This Month</button>
+        <button type="button" class="pill" data-i18n="lastMonth" onclick="applyDatePreset('lastMonth', this)">Last Month</button>
+        <button type="button" class="pill" data-i18n="allTime" onclick="applyDatePreset('all', this)">All Time</button>
       </div>
 
       <div class="form-grid">
         <div class="form-group">
-          <label for="startDate">From Date</label>
+          <label for="startDate" data-i18n="fromDate">From Date</label>
           <input type="date" id="startDate" onchange="clearPresetActive(); updateApp();" />
         </div>
         <div class="form-group">
-          <label for="endDate">To Date</label>
+          <label for="endDate" data-i18n="toDate">To Date</label>
           <input type="date" id="endDate" onchange="clearPresetActive(); updateApp();" />
         </div>
         <div class="form-group">
-          <label for="filterCategory">Category</label>
+          <label for="filterCategory" data-i18n="category">Category</label>
           <select id="filterCategory" onchange="updateApp()">
             <option value="ALL">All Categories</option>
             <option value="Food & Dining">Food & Dining</option>
@@ -621,15 +666,16 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="filterType">Type</label>
+          <label for="filterType" data-i18n="type">Type</label>
           <select id="filterType" onchange="updateApp()">
             <option value="ALL">All Types</option>
             <option value="income">Income Only</option>
             <option value="expense">Expense Only</option>
+            <option value="cc_payment">CC Bill Payments</option>
           </select>
         </div>
         <div class="form-group full" style="margin-bottom: 0;">
-          <input type="text" id="searchQuery" placeholder="Search by description or payment mode..." oninput="updateApp()" />
+          <input type="text" id="searchQuery" data-i18n-placeholder="searchPlaceholder" placeholder="Search by description or payment mode..." oninput="updateApp()" />
         </div>
       </div>
     </div>
@@ -637,7 +683,7 @@
     <!-- Transaction History -->
     <div class="card">
       <div class="section-header">
-        <h2 class="section-title">Transaction History (<span id="txCount">0</span>)</h2>
+        <h2 class="section-title"><span data-i18n="txHistory">Transaction History</span> (<span id="txCount">0</span>)</h2>
       </div>
       <ul class="tx-list" id="transactionList"></ul>
     </div>
@@ -648,40 +694,40 @@
     <div class="card no-print">
       <div class="section-header">
         <h2 class="section-title" id="friendFormTitle">Add Friend Entry</h2>
-        <button type="button" class="budget-edit-btn" id="cancelFriendEditBtn" style="display:none;" onclick="resetFriendForm()">Cancel Edit</button>
+        <button type="button" class="budget-edit-btn" id="cancelFriendEditBtn" data-i18n="cancelEdit" style="display:none;" onclick="resetFriendForm()">Cancel Edit</button>
       </div>
       <input type="hidden" id="editFriendIndex" value="" />
 
       <div class="form-grid">
         <div class="form-group">
-          <label for="friendName">Friend's Name</label>
-          <input type="text" id="friendName" list="friendNamesList" placeholder="Enter name" />
+          <label for="friendName" data-i18n="friendName">Friend's Name</label>
+          <input type="text" id="friendName" list="friendNamesList" data-i18n-placeholder="enterName" placeholder="Enter name" />
           <datalist id="friendNamesList"></datalist>
         </div>
         <div class="form-group">
-          <label for="friendAmount">Amount</label>
+          <label for="friendAmount" data-i18n="amount">Amount</label>
           <input type="number" id="friendAmount" step="0.01" min="0" placeholder="0.00" />
         </div>
         <div class="form-group">
-          <label for="friendDate">Date</label>
+          <label for="friendDate" data-i18n="date">Date</label>
           <input type="date" id="friendDate" />
         </div>
         <div class="form-group">
-          <label for="friendDesc">Note (Optional)</label>
-          <input type="text" id="friendDesc" placeholder="e.g., Dinner split, Cab..." />
+          <label for="friendDesc" data-i18n="noteOptional">Note (Optional)</label>
+          <input type="text" id="friendDesc" data-i18n-placeholder="friendNotePlaceholder" placeholder="e.g., Dinner split, Cab..." />
         </div>
       </div>
 
       <div class="btn-row">
-        <button type="button" class="btn btn-receive" onclick="addOrUpdateFriendTransaction('take')">To Receive (+)</button>
-        <button type="button" class="btn btn-pay" onclick="addOrUpdateFriendTransaction('give')">To Pay (-)</button>
+        <button type="button" class="btn btn-receive" data-i18n="toReceiveBtn" onclick="addOrUpdateFriendTransaction('take')">To Receive (+)</button>
+        <button type="button" class="btn btn-pay" data-i18n="toPayBtn" onclick="addOrUpdateFriendTransaction('give')">To Pay (-)</button>
       </div>
     </div>
 
     <!-- Person-Wise Summary -->
     <div class="card">
       <div class="section-header">
-        <h2 class="section-title">Person-Wise Summary</h2>
+        <h2 class="section-title" data-i18n="personSummary">Person-Wise Summary</h2>
       </div>
       <div class="person-grid" id="personSummaryList"></div>
     </div>
@@ -689,8 +735,8 @@
     <!-- All Friend Entries -->
     <div class="card">
       <div class="section-header">
-        <h2 class="section-title">All Friend Entries (<span id="friendTxCount">0</span>)</h2>
-        <input type="text" id="friendSearch" placeholder="Filter by friend..." oninput="updateApp()" style="width: 150px; padding: 6px 9px; font-size: 12px;" class="no-print" />
+        <h2 class="section-title"><span data-i18n="allFriendEntries">All Friend Entries</span> (<span id="friendTxCount">0</span>)</h2>
+        <input type="text" id="friendSearch" data-i18n-placeholder="filterFriend" placeholder="Filter by friend..." oninput="updateApp()" style="width: 140px; padding: 6px 9px; font-size: 12px;" class="no-print" />
       </div>
       <ul class="tx-list" id="friendTransactionList"></ul>
     </div>
@@ -700,29 +746,29 @@
   <section id="tab-reports" class="tab-panel">
     <div class="card">
       <div class="section-header">
-        <h2 class="section-title">Spending by Category (Selected Range)</h2>
+        <h2 class="section-title" data-i18n="spendingByCategory">Spending by Category (Selected Range)</h2>
       </div>
       <div id="categoryBreakdown"></div>
     </div>
 
     <div class="card">
       <div class="section-header">
-        <h2 class="section-title">Spending by Payment Mode</h2>
+        <h2 class="section-title" data-i18n="spendingByMode">Spending by Payment Mode</h2>
       </div>
       <div id="modeBreakdown"></div>
     </div>
 
     <div class="card no-print">
       <div class="section-header">
-        <h2 class="section-title">Export & Backup</h2>
+        <h2 class="section-title" data-i18n="exportBackup">Export & Backup</h2>
       </div>
       <div class="btn-row" style="margin-bottom: 10px;">
-        <button type="button" class="btn btn-primary" onclick="downloadPDF()">📄 Export PDF Report</button>
-        <button type="button" class="btn btn-secondary" onclick="exportCSV()">📊 Export Excel (CSV)</button>
+        <button type="button" class="btn btn-primary" data-i18n="exportPdf" onclick="downloadPDF()">📄 Export PDF Report</button>
+        <button type="button" class="btn btn-secondary" data-i18n="exportCsv" onclick="exportCSV()">📊 Export Excel (CSV)</button>
       </div>
       <div class="btn-row">
-        <button type="button" class="btn btn-secondary" onclick="exportBackup()">💾 Download JSON Backup</button>
-        <button type="button" class="btn btn-secondary" onclick="importBackup()">📂 Restore JSON Backup</button>
+        <button type="button" class="btn btn-secondary" data-i18n="downloadBackup" onclick="exportBackup()">💾 Download JSON Backup</button>
+        <button type="button" class="btn btn-secondary" data-i18n="restoreBackup" onclick="importBackup()">📂 Restore JSON Backup</button>
         <input type="file" id="backupFile" accept=".json" onchange="importBackup(event)" style="display: none;" />
       </div>
     </div>
@@ -734,15 +780,15 @@
   <div class="bottom-nav-inner">
     <button type="button" class="nav-btn active" onclick="switchTab('expenses', this)">
       <span class="nav-ico">💸</span>
-      <span>Expenses</span>
+      <span data-i18n="navExpenses">Expenses</span>
     </button>
     <button type="button" class="nav-btn" onclick="switchTab('friends', this)">
       <span class="nav-ico">🤝</span>
-      <span>Friends</span>
+      <span data-i18n="navFriends">Friends</span>
     </button>
     <button type="button" class="nav-btn" onclick="switchTab('reports', this)">
       <span class="nav-ico">📊</span>
-      <span>Reports</span>
+      <span data-i18n="navReports">Reports</span>
     </button>
   </div>
 </nav>
@@ -756,7 +802,350 @@
   let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
   let friendTransactions = JSON.parse(localStorage.getItem('friendTransactions')) || [];
   let currentCurrency = localStorage.getItem('currency') || '$';
+  let currentLang = localStorage.getItem('mpassbookLang') || 'en';
   let budgetsByCurrency = JSON.parse(localStorage.getItem('budgetsByCurrency')) || {};
+
+  const I18N = {
+    en: {
+      appTitle: 'Mpassbook',
+      activeWallet: 'Active Wallet',
+      bankCashBalance: 'Bank / Cash Balance',
+      ccUnpaidDue: 'CC Unpaid Due',
+      ccOverpaid: 'CC Overpaid / Credit',
+      friendsNet: 'Friends Net',
+      receive: 'Receive',
+      pay: 'Pay',
+      periodIncome: 'Period Income',
+      periodExpense: 'Period Expense',
+      selectedDateRange: 'Selected date range',
+      excludesCcTransfers: 'Excludes CC bill transfers',
+      thisMonthSpending: 'This Month Spending',
+      editLimit: 'Edit Limit',
+      addTransaction: 'Add Transaction',
+      editTransaction: 'Edit Transaction',
+      cancelEdit: 'Cancel Edit',
+      amount: 'Amount',
+      category: 'Category',
+      paymentMode: 'Payment Mode',
+      date: 'Date',
+      descNote: 'Description / Note',
+      descPlaceholder: 'e.g., Lunch, Fuel, SBICARD Payment...',
+      btnIncome: '+ Income',
+      btnExpense: '- Expense',
+      btnCcPay: '💳 Pay CC Bill',
+      ccBillBadge: 'CC Bill Payment',
+      filterSearch: 'Filter & Search',
+      today: 'Today',
+      thisWeek: 'This Week',
+      thisMonth: 'This Month',
+      lastMonth: 'Last Month',
+      allTime: 'All Time',
+      fromDate: 'From Date',
+      toDate: 'To Date',
+      type: 'Type',
+      allCategories: 'All Categories',
+      allTypes: 'All Types',
+      incomeOnly: 'Income Only',
+      expenseOnly: 'Expense Only',
+      ccBillPayments: 'CC Bill Payments',
+      searchPlaceholder: 'Search by description or payment mode...',
+      txHistory: 'Transaction History',
+      noTxPeriod: 'No transactions in this period.',
+      edit: 'Edit',
+      delete: 'Delete',
+      addFriendEntry: 'Add Friend Entry',
+      editFriendEntry: 'Edit Friend Entry',
+      friendName: "Friend's Name",
+      enterName: 'Enter name',
+      noteOptional: 'Note (Optional)',
+      friendNotePlaceholder: 'e.g., Dinner split, Cab...',
+      toReceiveBtn: 'To Receive (+)',
+      toPayBtn: 'To Pay (-)',
+      personSummary: 'Person-Wise Summary',
+      allSettled: 'All settled up',
+      owesYou: 'Owes you',
+      youOwe: 'You owe',
+      settle: '✓ Settle',
+      settled: 'Settled',
+      noFriendBalances: 'No friend balances yet.',
+      allFriendEntries: 'All Friend Entries',
+      filterFriend: 'Filter by friend...',
+      noFriendEntries: 'No friend entries found.',
+      toReceiveTag: 'To Receive',
+      toPayTag: 'To Pay',
+      spendingByCategory: 'Spending by Category (Selected Range)',
+      spendingByMode: 'Spending by Payment Mode',
+      noExpensesRange: 'No expenses in the selected date range.',
+      noModeData: 'No payment mode data for this period.',
+      exportBackup: 'Export & Backup',
+      exportPdf: '📄 Export PDF Report',
+      exportCsv: '📊 Export Excel (CSV)',
+      downloadBackup: '💾 Download JSON Backup',
+      restoreBackup: '📂 Restore JSON Backup',
+      navExpenses: 'Expenses',
+      navFriends: 'Friends',
+      navReports: 'Reports',
+      reportTitle: 'Mpassbook Report',
+      alertPositiveAmt: 'Please enter a valid positive amount.',
+      alertSelectDate: 'Please select a date.',
+      alertFriendName: "Please enter your friend's name.",
+      confirmDeleteTx: 'Delete this transaction?',
+      confirmDeleteFriend: 'Delete this friend entry?',
+      confirmSettle: 'Record a settlement entry of {amt} with {name}?',
+      promptBudget: 'Enter monthly expense budget limit for {wallet}:',
+      confirmRestore: 'This will replace your current local data. Continue restore?',
+      alertRestoreOk: 'Backup restored successfully!',
+      alertBackupOk: 'Backup saved successfully.',
+      categories: {
+        'Food & Dining': 'Food & Dining',
+        'Groceries': 'Groceries',
+        'Travel & Fuel': 'Travel & Fuel',
+        'Shopping': 'Shopping',
+        'Bills & Utilities': 'Bills & Utilities',
+        'Rent & Housing': 'Rent & Housing',
+        'Health & Medical': 'Health & Medical',
+        'Entertainment': 'Entertainment',
+        'Salary & Business': 'Salary & Business',
+        'Other': 'Other'
+      },
+      modes: {
+        'UPI / Bank': 'UPI / Bank',
+        'Cash': 'Cash',
+        'Credit Card': 'Credit Card',
+        'Debit Card': 'Debit Card'
+      }
+    },
+    hi: {
+      appTitle: 'Mpassbook',
+      activeWallet: 'सक्रिय वॉलेट',
+      bankCashBalance: 'बैंक / कैश बैलेंस',
+      ccUnpaidDue: 'CC बकाया बिल',
+      ccOverpaid: 'CC अधिक भुगतान',
+      friendsNet: 'दोस्तों का हिसाब',
+      receive: 'लेना है',
+      pay: 'देना है',
+      periodIncome: 'कुल आय (Income)',
+      periodExpense: 'कुल खर्च (Expense)',
+      selectedDateRange: 'चुनी गई तारीख तक',
+      excludesCcTransfers: 'CC बिल पेमेंट शामिल नहीं',
+      thisMonthSpending: 'इस महीने का खर्च',
+      editLimit: 'बजट बदलें',
+      addTransaction: 'नया लेन-देन जोड़ें',
+      editTransaction: 'लेन-देन सुधारें',
+      cancelEdit: 'रद्द करें',
+      amount: 'रकम (Amount)',
+      category: 'श्रेणी (Category)',
+      paymentMode: 'भुगतान का तरीका',
+      date: 'तारीख',
+      descNote: 'विवरण / नोट',
+      descPlaceholder: 'जैसे: खाना, पेट्रोल, SBICARD Payment...',
+      btnIncome: '+ आय (Income)',
+      btnExpense: '- खर्च (Expense)',
+      btnCcPay: '💳 CC बिल भरें',
+      ccBillBadge: 'CC बिल भुगतान',
+      filterSearch: 'फ़िल्टर और खोजें',
+      today: 'आज',
+      thisWeek: 'इस सप्ताह',
+      thisMonth: 'इस महीने',
+      lastMonth: 'पिछला महीना',
+      allTime: 'सभी समय',
+      fromDate: 'शुरुआती तारीख',
+      toDate: 'अंतिम तारीख',
+      type: 'प्रकार',
+      allCategories: 'सभी श्रेणियां',
+      allTypes: 'सभी प्रकार',
+      incomeOnly: 'केवल आय',
+      expenseOnly: 'केवल खर्च',
+      ccBillPayments: 'CC बिल भुगतान',
+      searchPlaceholder: 'विवरण या भुगतान के तरीके से खोजें...',
+      txHistory: 'लेन-देन इतिहास',
+      noTxPeriod: 'इस अवधि में कोई लेन-देन नहीं है।',
+      edit: 'सुधारें',
+      delete: 'हटाएं',
+      addFriendEntry: 'दोस्त की एंट्री जोड़ें',
+      editFriendEntry: 'दोस्त की एंट्री सुधारें',
+      friendName: 'दोस्त का नाम',
+      enterName: 'नाम लिखें',
+      noteOptional: 'नोट (वैकल्पिक)',
+      friendNotePlaceholder: 'जैसे: डिनर, टैक्सी, उधार...',
+      toReceiveBtn: 'लेना है (+)',
+      toPayBtn: 'देना है (-)',
+      personSummary: 'व्यक्तिगत सारांश',
+      allSettled: 'हिसाब बराबर',
+      owesYou: 'आपको देंगे',
+      youOwe: 'आपको देने हैं',
+      settle: '✓ हिसाब चुकता',
+      settled: 'चुकता',
+      noFriendBalances: 'अभी किसी दोस्त का हिसाब नहीं है।',
+      allFriendEntries: 'सभी दोस्तों की एंट्री',
+      filterFriend: 'दोस्त का नाम खोजें...',
+      noFriendEntries: 'कोई एंट्री नहीं मिली।',
+      toReceiveTag: 'लेना है',
+      toPayTag: 'देना है',
+      spendingByCategory: 'श्रेणी के अनुसार खर्च',
+      spendingByMode: 'भुगतान के तरीके से खर्च',
+      noExpensesRange: 'चुनी गई तारीखों में कोई खर्च नहीं है।',
+      noModeData: 'इस अवधि के लिए डेटा उपलब्ध नहीं है।',
+      exportBackup: 'एक्सपोर्ट और बैकअप',
+      exportPdf: '📄 PDF रिपोर्ट डाउनलोड करें',
+      exportCsv: '📊 Excel (CSV) एक्सपोर्ट',
+      downloadBackup: '💾 JSON बैकअप डाउनलोड',
+      restoreBackup: '📂 JSON बैकअप रीस्टोर',
+      navExpenses: 'खर्च',
+      navFriends: 'दोस्त',
+      navReports: 'रिपोर्ट',
+      reportTitle: 'Mpassbook रिपोर्ट',
+      alertPositiveAmt: 'कृपया सही रकम दर्ज करें।',
+      alertSelectDate: 'कृपया तारीख चुनें।',
+      alertFriendName: 'कृपया दोस्त का नाम दर्ज करें।',
+      confirmDeleteTx: 'क्या आप इस लेन-देन को हटाना चाहते हैं?',
+      confirmDeleteFriend: 'क्या आप इस एंट्री को हटाना चाहते हैं?',
+      confirmSettle: '{name} के साथ {amt} का हिसाब चुकता दर्ज करें?',
+      promptBudget: '{wallet} के लिए मासिक खर्च सीमा दर्ज करें:',
+      confirmRestore: 'यह आपका मौजूदा डेटा बदल देगा। क्या आप रीस्टोर करना चाहते हैं?',
+      alertRestoreOk: 'बैकअप सफलतापूर्वक रीस्टोर हो गया!',
+      alertBackupOk: 'बैकअप सफलतापूर्वक सेव हो गया।',
+      categories: {
+        'Food & Dining': 'खाना-पीना (Food)',
+        'Groceries': 'किराना / दूध (Groceries)',
+        'Travel & Fuel': 'यात्रा और पेट्रोल',
+        'Shopping': 'खरीदारी (Shopping)',
+        'Bills & Utilities': 'बिल और रिचार्ज',
+        'Rent & Housing': 'किराया और घर',
+        'Health & Medical': 'दवा और स्वास्थ्य',
+        'Entertainment': 'मनोरंजन',
+        'Salary & Business': 'वेतन और व्यापार',
+        'Other': 'अन्य (Other)'
+      },
+      modes: {
+        'UPI / Bank': 'UPI / बैंक',
+        'Cash': 'नकद (Cash)',
+        'Credit Card': 'क्रेडिट कार्ड',
+        'Debit Card': 'डेबिट कार्ड'
+      }
+    },
+    gu: {
+      appTitle: 'Mpassbook',
+      activeWallet: 'સક્રિય વોલેટ',
+      bankCashBalance: 'બેંક / રોકડ સિલક',
+      ccUnpaidDue: 'CC બાકી બિલ',
+      ccOverpaid: 'CC વધુ જમા',
+      friendsNet: 'મિત્રોનો હિસાબ',
+      receive: 'લેવાના',
+      pay: 'દેવાના',
+      periodIncome: 'કુલ આવક (Income)',
+      periodExpense: 'કુલ ખર્ચ (Expense)',
+      selectedDateRange: 'પસંદ કરેલ તારીખ મુજબ',
+      excludesCcTransfers: 'CC બિલ પેમેન્ટ ખર્ચમાં ગણાતું નથી',
+      thisMonthSpending: 'આ મહિનાનો ખર્ચ',
+      editLimit: 'બજેટ બદલો',
+      addTransaction: 'નવી એન્ટ્રી ઉમેરો',
+      editTransaction: 'એન્ટ્રી સુધારો',
+      cancelEdit: 'રદ કરો',
+      amount: 'રકમ (Amount)',
+      category: 'કેટેગરી',
+      paymentMode: 'પેમેન્ટ મોડ',
+      date: 'તારીખ',
+      descNote: 'વિગત / નોંધ',
+      descPlaceholder: 'દા.ત., દૂધ, શાકભાજી, SBICARD Payment...',
+      btnIncome: '+ આવક (Income)',
+      btnExpense: '- ખર્ચ (Expense)',
+      btnCcPay: '💳 CC બિલ ભરો',
+      ccBillBadge: 'CC બિલ પેમેન્ટ',
+      filterSearch: 'ફિલ્ટર અને શોધો',
+      today: 'આજ',
+      thisWeek: 'આ અઠવાડિયું',
+      thisMonth: 'આ મહિનો',
+      lastMonth: 'ગયો મહિનો',
+      allTime: 'બધો સમય',
+      fromDate: 'કઈ તારીખથી',
+      toDate: 'કઈ તારીખ સુધી',
+      type: 'પ્રકાર',
+      allCategories: 'બધી કેટેગરી',
+      allTypes: 'બધા પ્રકાર',
+      incomeOnly: 'ફક્ત આવક',
+      expenseOnly: 'ફક્ત ખર્ચ',
+      ccBillPayments: 'CC બિલ પેમેન્ટ',
+      searchPlaceholder: 'વિગત અથવા પેમેન્ટ મોડથી શોધો...',
+      txHistory: 'વ્યવહારોની યાદી',
+      noTxPeriod: 'આ સમયગાળામાં કોઈ એન્ટ્રી નથી.',
+      edit: 'સુધારો',
+      delete: 'કાઢી નાખો',
+      addFriendEntry: 'મિત્રની એન્ટ્રી ઉમેરો',
+      editFriendEntry: 'મિત્રની એન્ટ્રી સુધારો',
+      friendName: 'મિત્રનું નામ',
+      enterName: 'નામ લખો',
+      noteOptional: 'નોંધ (મરજિયાત)',
+      friendNotePlaceholder: 'દા.ત., જમવાનું, ભાડું, ઉછીના...',
+      toReceiveBtn: 'લેવાના (+)',
+      toPayBtn: 'દેવાના (-)',
+      personSummary: 'વ્યક્તિ મુજબ હિસાબ',
+      allSettled: 'હિસાબ પૂરો (ચૂકતે)',
+      owesYou: 'તમારે લેવાના',
+      youOwe: 'તમારે દેવાના',
+      settle: '✓ ચૂકતે કરો',
+      settled: 'ચૂકતે',
+      noFriendBalances: 'હજુ કોઈ મિત્રનો હિસાબ નથી.',
+      allFriendEntries: 'મિત્રોની બધી એન્ટ્રી',
+      filterFriend: 'મિત્રનું નામ શોધો...',
+      noFriendEntries: 'કોઈ એન્ટ્રી મળી નથી.',
+      toReceiveTag: 'લેવાના',
+      toPayTag: 'દેવાના',
+      spendingByCategory: 'કેટેગરી મુજબ ખર્ચ',
+      spendingByMode: 'પેમેન્ટ મોડ મુજબ ખર્ચ',
+      noExpensesRange: 'પસંદ કરેલ તારીખોમાં કોઈ ખર્ચ નથી.',
+      noModeData: 'આ સમયગાળા માટે કોઈ માહિતી નથી.',
+      exportBackup: 'એક્સપોર્ટ અને બેકઅપ',
+      exportPdf: '📄 PDF રિપોર્ટ ડાઉનલોડ કરો',
+      exportCsv: '📊 Excel (CSV) એક્સપોર્ટ',
+      downloadBackup: '💾 JSON બેકઅપ ડાઉનલોડ',
+      restoreBackup: '📂 JSON બેકઅપ રીસ્ટોર',
+      navExpenses: 'ખર્ચ',
+      navFriends: 'મિત્રો',
+      navReports: 'રિપોર્ટ',
+      reportTitle: 'Mpassbook રિપોર્ટ',
+      alertPositiveAmt: 'કૃપા કરીને સાચી રકમ લખો.',
+      alertSelectDate: 'કૃપા કરીને તારીખ પસંદ કરો.',
+      alertFriendName: 'કૃપા કરીને મિત્રનું નામ લખો.',
+      confirmDeleteTx: 'શું તમારે આ એન્ટ્રી કાઢી નાખવી છે?',
+      confirmDeleteFriend: 'શું તમારે મિત્રની આ એન્ટ્રી કાઢી નાખવી છે?',
+      confirmSettle: '{name} સાથે {amt} નો હિસાબ ચૂકતે કરવો છે?',
+      promptBudget: '{wallet} માટે મહિનાનું ખર્ચ બજેટ લખો:',
+      confirmRestore: 'આનાથી તમારો હાલનો ડેટા બદલાઈ જશે. આગળ વધવું છે?',
+      alertRestoreOk: 'બેકઅપ સફળતાપૂર્વક રીસ્ટોર થઈ ગયો!',
+      alertBackupOk: 'બેકઅપ સફળતાપૂર્વક સેવ થઈ ગયો.',
+      categories: {
+        'Food & Dining': 'જમવાનું / નાસ્તો (Food)',
+        'Groceries': 'કરિયાણું / દૂધ (Groceries)',
+        'Travel & Fuel': 'મુસાફરી અને પેટ્રોલ',
+        'Shopping': 'ખરીદી (Shopping)',
+        'Bills & Utilities': 'બિલ અને રિચાર્જ',
+        'Rent & Housing': 'ભાડું અને ઘર',
+        'Health & Medical': 'દવા અને આરોગ્ય',
+        'Entertainment': 'મનોરંજન',
+        'Salary & Business': 'પગાર અને ધંધો',
+        'Other': 'અન્ય (Other)'
+      },
+      modes: {
+        'UPI / Bank': 'UPI / બેંક',
+        'Cash': 'રોકડ (Cash)',
+        'Credit Card': 'ક્રેડિટ કાર્ડ',
+        'Debit Card': 'ડેબિટ કાર્ડ'
+      }
+    }
+  };
+
+  function t(key) {
+    return (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key;
+  }
+
+  function tCat(cat) {
+    return (I18N[currentLang]?.categories?.[cat]) || cat;
+  }
+
+  function tMode(mode) {
+    return (I18N[currentLang]?.modes?.[mode]) || mode;
+  }
 
   const CURRENCY_LABELS = {
     '$': 'USD ($)',
@@ -778,6 +1167,14 @@
     'AED ': 7000
   };
 
+  const langSelect = document.getElementById('langSelect');
+  if ([...langSelect.options].some(o => o.value === currentLang)) {
+    langSelect.value = currentLang;
+  } else {
+    currentLang = 'en';
+    langSelect.value = 'en';
+  }
+
   const currencySelect = document.getElementById('currencySelect');
   if ([...currencySelect.options].some(o => o.value === currentCurrency)) {
     currencySelect.value = currentCurrency;
@@ -786,14 +1183,27 @@
     currencySelect.value = '$';
   }
 
-  // Assign legacy entries without a currency tag to the user's current active currency
+  // Auto-migrate legacy currency & legacy CC bill payment entries
   let migrated = false;
-  transactions = transactions.map(t => {
-    if (!t.currency) {
+  transactions = transactions.map(tx => {
+    let updated = { ...tx };
+    if (!updated.currency) {
+      updated.currency = currentCurrency;
       migrated = true;
-      return { ...t, currency: currentCurrency };
     }
-    return t;
+    const descLower = (updated.desc || '').toLowerCase();
+    if (
+      updated.type === 'expense' &&
+      updated.paymentMode !== 'Credit Card' &&
+      (descLower.includes('sbicard payment') ||
+       descLower.includes('cc payment') ||
+       descLower.includes('credit card payment') ||
+       descLower.includes('cc bill'))
+    ) {
+      updated.type = 'cc_payment';
+      migrated = true;
+    }
+    return updated;
   });
   friendTransactions = friendTransactions.map(ft => {
     if (!ft.currency) {
@@ -807,13 +1217,11 @@
     localStorage.setItem('friendTransactions', JSON.stringify(friendTransactions));
   }
 
-  // Theme init
   if (localStorage.getItem('mpassbookTheme') === 'dark') {
     document.body.classList.add('dark');
     document.getElementById('themeToggle').innerText = '☀️';
   }
 
-  // Default dates
   const toISODate = (d) => {
     const offset = d.getTimezoneOffset() * 60000;
     return new Date(d.getTime() - offset).toISOString().slice(0, 10);
@@ -844,6 +1252,52 @@
     return Number(budgetsByCurrency[currentCurrency]) || DEFAULT_BUDGETS[currentCurrency] || 2000;
   }
 
+  function applyStaticTranslations() {
+    document.documentElement.lang = currentLang;
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      el.innerText = t(key);
+    });
+
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      el.placeholder = t(key);
+    });
+
+    ['category', 'filterCategory'].forEach(selId => {
+      const sel = document.getElementById(selId);
+      [...sel.options].forEach(opt => {
+        if (opt.value === 'ALL') opt.text = t('allCategories');
+        else opt.text = tCat(opt.value);
+      });
+    });
+
+    const pmSel = document.getElementById('paymentMode');
+    [...pmSel.options].forEach(opt => {
+      opt.text = tMode(opt.value);
+    });
+
+    const ftSel = document.getElementById('filterType');
+    [...ftSel.options].forEach(opt => {
+      if (opt.value === 'ALL') opt.text = t('allTypes');
+      else if (opt.value === 'income') opt.text = t('incomeOnly');
+      else if (opt.value === 'expense') opt.text = t('expenseOnly');
+      else if (opt.value === 'cc_payment') opt.text = t('ccBillPayments');
+    });
+
+    document.getElementById('txFormTitle').innerText =
+      document.getElementById('editIndex').value === '' ? t('addTransaction') : t('editTransaction');
+    document.getElementById('friendFormTitle').innerText =
+      document.getElementById('editFriendIndex').value === '' ? t('addFriendEntry') : t('editFriendEntry');
+  }
+
+  function changeLanguage() {
+    currentLang = document.getElementById('langSelect').value;
+    localStorage.setItem('mpassbookLang', currentLang);
+    updateApp();
+  }
+
   function toggleTheme() {
     const isDark = document.body.classList.toggle('dark');
     localStorage.setItem('mpassbookTheme', isDark ? 'dark' : 'light');
@@ -868,11 +1322,12 @@
 
   function editMonthlyBudget() {
     const curBudget = getActiveBudget();
-    const input = prompt(`Enter monthly expense budget limit for ${CURRENCY_LABELS[currentCurrency] || currentCurrency}:`, curBudget);
+    const walletName = CURRENCY_LABELS[currentCurrency] || currentCurrency;
+    const input = prompt(t('promptBudget').replace('{wallet}', walletName), curBudget);
     if (input === null) return;
     const val = parseFloat(input);
     if (isNaN(val) || val <= 0) {
-      alert('Please enter a valid positive number.');
+      alert(t('alertPositiveAmt'));
       return;
     }
     budgetsByCurrency[currentCurrency] = val;
@@ -920,16 +1375,16 @@
     const query = document.getElementById('searchQuery').value.trim().toLowerCase();
 
     return transactions
-      .map((t, index) => ({ ...t, originalIndex: index }))
-      .filter(t => {
-        if ((t.currency || '$') !== currentCurrency) return false;
-        const dStr = (t.date || '').slice(0, 10);
+      .map((tx, index) => ({ ...tx, originalIndex: index }))
+      .filter(tx => {
+        if ((tx.currency || '$') !== currentCurrency) return false;
+        const dStr = (tx.date || '').slice(0, 10);
         if (startVal && dStr && dStr < startVal) return false;
         if (endVal && dStr && dStr > endVal) return false;
-        if (catVal !== 'ALL' && t.category !== catVal) return false;
-        if (typeVal !== 'ALL' && t.type !== typeVal) return false;
+        if (catVal !== 'ALL' && tx.category !== catVal) return false;
+        if (typeVal !== 'ALL' && tx.type !== typeVal) return false;
         if (query) {
-          const hay = `${t.desc || ''} ${t.category || ''} ${t.paymentMode || ''}`.toLowerCase();
+          const hay = `${tx.desc || ''} ${tx.category || ''} ${tCat(tx.category)} ${tx.paymentMode || ''} ${tMode(tx.paymentMode)}`.toLowerCase();
           if (!hay.includes(query)) return false;
         }
         return true;
@@ -938,39 +1393,65 @@
   }
 
   function updateApp() {
+    applyStaticTranslations();
+
     const walletLabel = CURRENCY_LABELS[currentCurrency] || currentCurrency.trim();
-    document.getElementById('walletSubtitle').innerText = `Active Wallet: ${walletLabel}`;
+    document.getElementById('walletSubtitle').innerText = `${t('activeWallet')}: ${walletLabel}`;
     document.querySelectorAll('.cur-code').forEach(el => {
       el.innerText = walletLabel.split(' ')[0];
     });
 
-    // 1. Wallet Net Balance & Current Month Spending (for active currency only)
-    let allIncome = 0, allExpense = 0, thisMonthExpense = 0;
+    // 1. Bank/Cash Balance, CC Unpaid Due & This Month Spending
+    let allIncome = 0, allBankCashExpense = 0, allCcExpense = 0, allCcPaid = 0, thisMonthExpense = 0;
     const curMonthPrefix = toISODate(new Date()).slice(0, 7);
 
-    transactions.forEach(t => {
-      if ((t.currency || '$') !== currentCurrency) return;
-      const amt = Number(t.amount) || 0;
-      if (t.type === 'income') {
+    transactions.forEach(tx => {
+      if ((tx.currency || '$') !== currentCurrency) return;
+      const amt = Number(tx.amount) || 0;
+
+      if (tx.type === 'income') {
         allIncome += amt;
+      } else if (tx.type === 'cc_payment') {
+        allCcPaid += amt;
       } else {
-        allExpense += amt;
-        if ((t.date || '').startsWith(curMonthPrefix)) {
+        if ((tx.date || '').startsWith(curMonthPrefix)) {
           thisMonthExpense += amt;
+        }
+        if (tx.paymentMode === 'Credit Card') {
+          allCcExpense += amt;
+        } else {
+          allBankCashExpense += amt;
         }
       }
     });
 
-    const netBalance = allIncome - allExpense;
+    const netBalance = allIncome - allBankCashExpense - allCcPaid;
+    const ccUnpaidDue = allCcExpense - allCcPaid;
+
     const netEl = document.getElementById('kpiNetBalance');
     netEl.innerText = formatMoney(netBalance);
     netEl.style.color = netBalance >= 0 ? 'var(--income)' : 'var(--expense)';
+
+    const ccSubEl = document.getElementById('kpiCcDueSub');
+    if (ccUnpaidDue > 0.01) {
+      ccSubEl.innerText = `${t('ccUnpaidDue')}: ${formatMoney(ccUnpaidDue)}`;
+      ccSubEl.style.color = 'var(--ccpay)';
+      ccSubEl.style.fontWeight = '700';
+    } else if (ccUnpaidDue < -0.01) {
+      ccSubEl.innerText = `${t('ccOverpaid')}: ${formatMoney(Math.abs(ccUnpaidDue))}`;
+      ccSubEl.style.color = 'var(--income)';
+      ccSubEl.style.fontWeight = '700';
+    } else {
+      ccSubEl.innerText = `${t('ccUnpaidDue')}: ${formatMoney(0)}`;
+      ccSubEl.style.color = 'var(--text-muted)';
+      ccSubEl.style.fontWeight = '400';
+    }
 
     // Budget progress
     const monthlyBudget = getActiveBudget();
     const pct = Math.min(100, Math.round((thisMonthExpense / monthlyBudget) * 100));
     document.getElementById('budgetLabel').innerText =
-      `This Month Spending: ${formatMoney(thisMonthExpense)} / ${formatMoney(monthlyBudget)} (${Math.round((thisMonthExpense / monthlyBudget) * 100)}%)`;
+      `${t('thisMonthSpending')}: ${formatMoney(thisMonthExpense)} / ${formatMoney(monthlyBudget)} (${Math.round((thisMonthExpense / monthlyBudget) * 100)}%)`;
     const fill = document.getElementById('budgetFill');
     fill.style.width = `${pct}%`;
     fill.style.background = pct >= 100 ? 'var(--expense)' : pct >= 80 ? '#f59e0b' : 'var(--primary)';
@@ -978,10 +1459,10 @@
     // 2. Filtered Transactions & Period KPIs
     const filtered = getFilteredTransactions();
     let periodIncome = 0, periodExpense = 0;
-    filtered.forEach(t => {
-      const amt = Number(t.amount) || 0;
-      if (t.type === 'income') periodIncome += amt;
-      else periodExpense += amt;
+    filtered.forEach(tx => {
+      const amt = Number(tx.amount) || 0;
+      if (tx.type === 'income') periodIncome += amt;
+      else if (tx.type === 'expense') periodExpense += amt;
     });
 
     document.getElementById('kpiIncome').innerText = formatMoney(periodIncome);
@@ -990,28 +1471,33 @@
 
     const list = document.getElementById('transactionList');
     if (filtered.length === 0) {
-      list.innerHTML = `<li class="empty-state">No ${walletLabel} transactions in this period.</li>`;
+      list.innerHTML = `<li class="empty-state">${escapeHTML(t('noTxPeriod'))}</li>`;
     } else {
-      list.innerHTML = filtered.map(t => {
-        const dLabel = t.date ? new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-        const isInc = t.type === 'income';
+      list.innerHTML = filtered.map(tx => {
+        const dLabel = tx.date ? new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+        const isInc = tx.type === 'income';
+        const isCcPay = tx.type === 'cc_payment';
+        const amtColor = isInc ? 'var(--income)' : isCcPay ? 'var(--ccpay)' : 'var(--expense)';
+        const prefix = isInc ? '+' : isCcPay ? '⇄ ' : '-';
         return `
           <li class="tx-item">
             <div class="tx-left">
-              <span class="tx-title">${escapeHTML(t.desc || t.category)}</span>
+              <span class="tx-title">${escapeHTML(tx.desc || tCat(tx.category))}</span>
               <div class="tx-badges">
-                <span class="badge">${escapeHTML(t.category)}</span>
-                <span class="badge">${escapeHTML(t.paymentMode || 'UPI / Bank')}</span>
+                ${isCcPay
+                  ? `<span class="badge badge-cc">${escapeHTML(t('ccBillBadge'))}</span>`
+                  : `<span class="badge">${escapeHTML(tCat(tx.category))}</span>`}
+                <span class="badge">${escapeHTML(tMode(tx.paymentMode || 'UPI / Bank'))}</span>
                 <span class="badge">${escapeHTML(dLabel)}</span>
               </div>
             </div>
             <div class="tx-right">
-              <span class="tx-amount" style="color: ${isInc ? 'var(--income)' : 'var(--expense)'};">
-                ${isInc ? '+' : '-'}${formatMoney(t.amount)}
+              <span class="tx-amount" style="color: ${amtColor};">
+                ${prefix}${formatMoney(tx.amount)}
               </span>
               <div class="tx-actions no-print">
-                <button type="button" class="mini-btn mini-edit" onclick="editTransaction(${t.originalIndex})">Edit</button>
-                <button type="button" class="mini-btn mini-del" onclick="deleteTransaction(${t.originalIndex})">Delete</button>
+                <button type="button" class="mini-btn mini-edit" onclick="editTransaction(${tx.originalIndex})">${escapeHTML(t('edit'))}</button>
+                <button type="button" class="mini-btn mini-del" onclick="deleteTransaction(${tx.originalIndex})">${escapeHTML(t('delete'))}</button>
               </div>
             </div>
           </li>
@@ -1019,7 +1505,7 @@
       }).join('');
     }
 
-    // 3. Friends Ledger & Person-Wise Aggregation (for active currency only)
+    // 3. Friends Ledger & Person-Wise Aggregation
     let totalReceive = 0, totalPay = 0;
     const personMap = {};
     const uniqueNames = new Set();
@@ -1047,7 +1533,7 @@
     const fNetEl = document.getElementById('kpiFriendsNet');
     fNetEl.innerText = `${friendsNet >= 0 ? '+' : ''}${formatMoney(friendsNet)}`;
     fNetEl.style.color = friendsNet >= 0 ? 'var(--receive)' : 'var(--pay)';
-    document.getElementById('kpiFriendsSub').innerText = `Receive ${formatMoney(totalReceive)} · Pay ${formatMoney(totalPay)}`;
+    document.getElementById('kpiFriendsSub').innerText = `${t('receive')} ${formatMoney(totalReceive)} · ${t('pay')} ${formatMoney(totalPay)}`;
 
     document.getElementById('friendNamesList').innerHTML = [...uniqueNames]
       .map(n => `<option value="${escapeHTML(n)}"></option>`)
@@ -1056,24 +1542,26 @@
     const personListEl = document.getElementById('personSummaryList');
     const people = Object.values(personMap).sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
     if (people.length === 0) {
-      personListEl.innerHTML = `<div class="empty-state">No ${walletLabel} friend balances yet.</div>`;
+      personListEl.innerHTML = `<div class="empty-state">${escapeHTML(t('noFriendBalances'))}</div>`;
     } else {
       personListEl.innerHTML = people.map(p => {
         const isSettled = Math.abs(p.net) < 0.01;
         const isReceive = p.net > 0;
         const statusText = isSettled
-          ? 'All settled up'
+          ? t('allSettled')
           : isReceive
-            ? `Owes you ${formatMoney(p.net)}`
-            : `You owe ${formatMoney(Math.abs(p.net))}`;
+            ? `${t('owesYou')} ${formatMoney(p.net)}`
+            : `${t('youOwe')} ${formatMoney(Math.abs(p.net))}`;
         const badgeColor = isSettled ? 'var(--text-muted)' : isReceive ? 'var(--receive)' : 'var(--pay)';
         return `
           <div class="person-card">
             <div>
               <div class="person-name">${escapeHTML(p.name)}</div>
-              <div class="person-status" style="color: ${badgeColor}; font-weight: 700;">${statusText}</div>
+              <div class="person-status" style="color: ${badgeColor}; font-weight: 700;">${escapeHTML(statusText)}</div>
             </div>
-            ${!isSettled ? `<button type="button" class="mini-btn mini-settle no-print" onclick="settlePerson('${escapeHTML(p.name)}', ${p.net})">✓ Settle</button>` : `<span class="badge">Settled</span>`}
+            ${!isSettled
+              ? `<button type="button" class="mini-btn mini-settle no-print" onclick="settlePerson('${escapeHTML(p.name)}', ${p.net})">${escapeHTML(t('settle'))}</button>`
+              : `<span class="badge">${escapeHTML(t('settled'))}</span>`}
           </div>
         `;
       }).join('');
@@ -1089,7 +1577,7 @@
     document.getElementById('friendTxCount').innerText = filteredFriends.length;
     const friendListEl = document.getElementById('friendTransactionList');
     if (filteredFriends.length === 0) {
-      friendListEl.innerHTML = `<li class="empty-state">No ${walletLabel} friend entries found.</li>`;
+      friendListEl.innerHTML = `<li class="empty-state">${escapeHTML(t('noFriendEntries'))}</li>`;
     } else {
       friendListEl.innerHTML = filteredFriends.map(ft => {
         const dLabel = ft.date ? new Date(ft.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
@@ -1099,7 +1587,7 @@
             <div class="tx-left">
               <span class="tx-title">${escapeHTML(ft.name)}</span>
               <div class="tx-badges">
-                <span class="badge">${isTake ? 'To Receive' : 'To Pay'}</span>
+                <span class="badge">${escapeHTML(isTake ? t('toReceiveTag') : t('toPayTag'))}</span>
                 ${ft.desc ? `<span class="badge">${escapeHTML(ft.desc)}</span>` : ''}
                 <span class="badge">${escapeHTML(dLabel)}</span>
               </div>
@@ -1109,8 +1597,8 @@
                 ${isTake ? '+' : '-'}${formatMoney(ft.amount)}
               </span>
               <div class="tx-actions no-print">
-                <button type="button" class="mini-btn mini-edit" onclick="editFriendTransaction(${ft.originalIndex})">Edit</button>
-                <button type="button" class="mini-btn mini-del" onclick="deleteFriendTransaction(${ft.originalIndex})">Delete</button>
+                <button type="button" class="mini-btn mini-edit" onclick="editFriendTransaction(${ft.originalIndex})">${escapeHTML(t('edit'))}</button>
+                <button type="button" class="mini-btn mini-del" onclick="deleteFriendTransaction(${ft.originalIndex})">${escapeHTML(t('delete'))}</button>
               </div>
             </div>
           </li>
@@ -1118,7 +1606,6 @@
       }).join('');
     }
 
-    // 4. Reports Breakdown
     renderReports(filtered);
 
     localStorage.setItem('transactions', JSON.stringify(transactions));
@@ -1126,15 +1613,15 @@
   }
 
   function renderReports(filtered) {
-    const expensesOnly = filtered.filter(t => t.type === 'expense');
-    const totalExp = expensesOnly.reduce((s, t) => s + (Number(t.amount) || 0), 0);
+    const expensesOnly = filtered.filter(tx => tx.type === 'expense');
+    const totalExp = expensesOnly.reduce((s, tx) => s + (Number(tx.amount) || 0), 0);
 
     const byCat = {};
     const byMode = {};
-    expensesOnly.forEach(t => {
-      const amt = Number(t.amount) || 0;
-      byCat[t.category] = (byCat[t.category] || 0) + amt;
-      const mode = t.paymentMode || 'UPI / Bank';
+    expensesOnly.forEach(tx => {
+      const amt = Number(tx.amount) || 0;
+      byCat[tx.category] = (byCat[tx.category] || 0) + amt;
+      const mode = tx.paymentMode || 'UPI / Bank';
       byMode[mode] = (byMode[mode] || 0) + amt;
     });
 
@@ -1142,8 +1629,8 @@
     const modeEl = document.getElementById('modeBreakdown');
 
     if (totalExp === 0) {
-      catEl.innerHTML = `<div class="empty-state">No expenses in the selected date range.</div>`;
-      modeEl.innerHTML = `<div class="empty-state">No payment mode data for this period.</div>`;
+      catEl.innerHTML = `<div class="empty-state">${escapeHTML(t('noExpensesRange'))}</div>`;
+      modeEl.innerHTML = `<div class="empty-state">${escapeHTML(t('noModeData'))}</div>`;
       return;
     }
 
@@ -1154,7 +1641,7 @@
         return `
           <div class="cat-row">
             <div class="cat-top">
-              <span>${escapeHTML(cat)}</span>
+              <span>${escapeHTML(tCat(cat))}</span>
               <span>${formatMoney(amt)} (${pct}%)</span>
             </div>
             <div class="progress-track">
@@ -1171,7 +1658,7 @@
         return `
           <div class="cat-row">
             <div class="cat-top">
-              <span>${escapeHTML(mode)}</span>
+              <span>${escapeHTML(tMode(mode))}</span>
               <span>${formatMoney(amt)} (${pct}%)</span>
             </div>
             <div class="progress-track">
@@ -1184,24 +1671,35 @@
 
   function addOrUpdateTransaction(type) {
     const amountInput = document.getElementById('amount');
-    const category = document.getElementById('category').value;
-    const paymentMode = document.getElementById('paymentMode').value;
+    const categoryEl = document.getElementById('category');
+    const paymentModeEl = document.getElementById('paymentMode');
     const descInput = document.getElementById('desc');
     const dateInput = document.getElementById('transactionDate');
     const editIndexInput = document.getElementById('editIndex');
 
     const amount = parseFloat(amountInput.value);
-    const desc = descInput.value.trim() || category;
     const selectedDate = dateInput.value;
     const editIndex = editIndexInput.value;
 
     if (isNaN(amount) || amount <= 0) {
-      alert('Please enter a valid positive amount.');
+      alert(t('alertPositiveAmt'));
       return;
     }
     if (!selectedDate) {
-      alert('Please select a date.');
+      alert(t('alertSelectDate'));
       return;
+    }
+
+    let category = categoryEl.value;
+    let paymentMode = paymentModeEl.value;
+    let desc = descInput.value.trim();
+
+    if (type === 'cc_payment') {
+      category = 'Bills & Utilities';
+      if (paymentMode === 'Credit Card') paymentMode = 'UPI / Bank';
+      if (!desc) desc = t('ccBillBadge');
+    } else {
+      if (!desc) desc = tCat(category);
     }
 
     const record = {
@@ -1229,25 +1727,25 @@
     document.getElementById('desc').value = '';
     document.getElementById('transactionDate').value = toISODate(new Date());
     document.getElementById('editIndex').value = '';
-    document.getElementById('txFormTitle').innerText = 'Add Transaction';
+    document.getElementById('txFormTitle').innerText = t('addTransaction');
     document.getElementById('cancelTxEditBtn').style.display = 'none';
   }
 
   function editTransaction(index) {
-    const t = transactions[index];
-    document.getElementById('amount').value = t.amount;
-    document.getElementById('category').value = t.category || 'Other';
-    document.getElementById('paymentMode').value = t.paymentMode || 'UPI / Bank';
-    document.getElementById('desc').value = t.desc || '';
-    if (t.date) document.getElementById('transactionDate').value = t.date.slice(0, 10);
+    const tx = transactions[index];
+    document.getElementById('amount').value = tx.amount;
+    document.getElementById('category').value = tx.category || 'Other';
+    document.getElementById('paymentMode').value = tx.paymentMode || 'UPI / Bank';
+    document.getElementById('desc').value = tx.desc || '';
+    if (tx.date) document.getElementById('transactionDate').value = tx.date.slice(0, 10);
     document.getElementById('editIndex').value = index;
-    document.getElementById('txFormTitle').innerText = 'Edit Transaction';
+    document.getElementById('txFormTitle').innerText = t('editTransaction');
     document.getElementById('cancelTxEditBtn').style.display = 'inline';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function deleteTransaction(index) {
-    if (!confirm('Delete this transaction?')) return;
+    if (!confirm(t('confirmDeleteTx'))) return;
     transactions.splice(index, 1);
     updateApp();
   }
@@ -1266,15 +1764,15 @@
     const editIndex = editIndexInput.value;
 
     if (!name) {
-      alert("Please enter your friend's name.");
+      alert(t('alertFriendName'));
       return;
     }
     if (isNaN(amount) || amount <= 0) {
-      alert('Please enter a valid positive amount.');
+      alert(t('alertPositiveAmt'));
       return;
     }
     if (!selectedDate) {
-      alert('Please select a date.');
+      alert(t('alertSelectDate'));
       return;
     }
 
@@ -1303,7 +1801,7 @@
     document.getElementById('friendDesc').value = '';
     document.getElementById('friendDate').value = toISODate(new Date());
     document.getElementById('editFriendIndex').value = '';
-    document.getElementById('friendFormTitle').innerText = 'Add Friend Entry';
+    document.getElementById('friendFormTitle').innerText = t('addFriendEntry');
     document.getElementById('cancelFriendEditBtn').style.display = 'none';
   }
 
@@ -1314,45 +1812,45 @@
     document.getElementById('friendDesc').value = ft.desc || '';
     if (ft.date) document.getElementById('friendDate').value = ft.date.slice(0, 10);
     document.getElementById('editFriendIndex').value = index;
-    document.getElementById('friendFormTitle').innerText = 'Edit Friend Entry';
+    document.getElementById('friendFormTitle').innerText = t('editFriendEntry');
     document.getElementById('cancelFriendEditBtn').style.display = 'inline';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function deleteFriendTransaction(index) {
-    if (!confirm('Delete this friend entry?')) return;
+    if (!confirm(t('confirmDeleteFriend'))) return;
     friendTransactions.splice(index, 1);
     updateApp();
   }
 
   function settlePerson(name, netAmount) {
     const absAmt = Number(Math.abs(netAmount).toFixed(2));
-    if (!confirm(`Record a settlement entry of ${formatMoney(absAmt)} with ${name}?`)) return;
+    const msg = t('confirmSettle').replace('{amt}', formatMoney(absAmt)).replace('{name}', name);
+    if (!confirm(msg)) return;
     friendTransactions.push({
       type: netAmount > 0 ? 'give' : 'take',
       name,
       amount: absAmt,
-      desc: 'Settled up',
+      desc: t('settled'),
       currency: currentCurrency,
       date: new Date().toISOString()
     });
     updateApp();
   }
 
-  // CSV Export (for active currency wallet)
   function exportCSV() {
     const walletCode = (CURRENCY_LABELS[currentCurrency] || currentCurrency).split(' ')[0];
     const rows = [['Date', 'Wallet', 'Section', 'Type', 'Category / Person', 'Payment Mode', 'Description', 'Amount']];
-    getFilteredTransactions().forEach(t => {
+    getFilteredTransactions().forEach(tx => {
       rows.push([
-        (t.date || '').slice(0, 10),
+        (tx.date || '').slice(0, 10),
         walletCode,
         'Personal',
-        t.type,
-        t.category,
-        t.paymentMode || 'UPI / Bank',
-        t.desc || '',
-        (t.type === 'income' ? t.amount : -t.amount).toFixed(2)
+        tx.type,
+        tx.category,
+        tx.paymentMode || 'UPI / Bank',
+        tx.desc || '',
+        (tx.type === 'income' ? tx.amount : -tx.amount).toFixed(2)
       ]);
     });
     friendTransactions
@@ -1384,7 +1882,6 @@
     URL.revokeObjectURL(url);
   }
 
-  // JSON Backup & Restore
   async function exportBackup() {
     const dataObj = {};
     for (let i = 0; i < localStorage.length; i++) {
@@ -1401,7 +1898,7 @@
       }
       try {
         const result = await backupPlugin.saveBackup({ content, filename });
-        if (!result.cancelled) alert('Backup saved successfully.');
+        if (!result.cancelled) alert(t('alertBackupOk'));
       } catch (err) {
         alert('Backup failed: ' + (err.message || err));
       }
@@ -1458,58 +1955,31 @@
       alert('Invalid backup structure.');
       return;
     }
-    if (confirm('This will replace your current local data. Continue restore?')) {
+    if (confirm(t('confirmRestore'))) {
       localStorage.clear();
       for (const key in imported) {
         if (Object.prototype.hasOwnProperty.call(imported, key)) {
           localStorage.setItem(key, imported[key]);
         }
       }
-      alert('Backup restored successfully!');
+      alert(t('alertRestoreOk'));
       location.reload();
     }
   }
 
-  // PDF Export
+  // Stylish HTML PDF Export (Same in Chrome & Android App, respects chosen language)
   async function downloadPDF() {
-    const start = document.getElementById('startDate').value || 'Beginning';
-    const end = document.getElementById('endDate').value || 'Today';
+    const start = document.getElementById('startDate').value || t('allTime');
+    const end = document.getElementById('endDate').value || t('today');
     const walletLabel = CURRENCY_LABELS[currentCurrency] || currentCurrency.trim();
-    const title = `Mpassbook ${walletLabel} Report (${start} to ${end})`;
+    const title = `${t('reportTitle')} — ${walletLabel} (${start} to ${end})`;
     document.getElementById('printHeaderTitle').innerText = title;
 
-    if (window.Capacitor?.isNativePlatform()) {
-      if (!backupPlugin) {
-        alert('PDF export plugin is unavailable in this app build.');
-        return;
-      }
-      const filtered = getFilteredTransactions();
-      const lines = [
-        `Wallet: ${walletLabel}`,
-        `Net Balance: ${document.getElementById('kpiNetBalance').innerText}`,
-        `Friends Summary: ${document.getElementById('kpiFriendsSub').innerText}`,
-        '',
-        'Personal Transactions'
-      ];
-      filtered.forEach(t => {
-        lines.push(`${(t.date || '').slice(0, 10)} | ${t.type.toUpperCase()} | ${t.desc} (${t.category}) | ${t.type === 'income' ? '+' : '-'}${formatMoney(t.amount)}`);
-      });
-      lines.push('', 'Friends Ledger');
-      friendTransactions
-        .filter(ft => (ft.currency || '$') === currentCurrency)
-        .forEach(ft => {
-          lines.push(`${(ft.date || '').slice(0, 10)} | ${ft.name} | ${ft.type === 'take' ? 'To Receive' : 'To Pay'} | ${formatMoney(ft.amount)}${ft.desc ? ` | ${ft.desc}` : ''}`);
-        });
-
+    if (window.Capacitor?.isNativePlatform() && backupPlugin?.printHtmlReport) {
       try {
-        const result = await backupPlugin.saveReport({
-          title,
-          lines,
-          filename: `mpassbook_report_${toISODate(new Date())}.pdf`
-        });
-        if (!result.cancelled) alert('PDF report saved successfully.');
+        await backupPlugin.printHtmlReport({ title });
       } catch (err) {
-        alert('PDF save failed: ' + (err.message || err));
+        alert('PDF print failed: ' + (err.message || err));
       }
       return;
     }
